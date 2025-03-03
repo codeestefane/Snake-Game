@@ -28,6 +28,8 @@ let cenarioPosicao = [];
 let anguloFinal;
 let anguloInicial;
 
+let qtdPontos = 0;
+
 let velocidadeFrame = 60;
 
 let ultimoAnguloInicial = 0;
@@ -383,10 +385,15 @@ function verificaCobraAlimento(){
             alimento.atualizaAlimentoAleatorio();
             cobra.aumentaCobrinha();
             velocidadeFrame -= 4;
-            console.log(velocidadeFrame)
+            qtdPontos += 20;
+            desenhaScore("green");
             clearInterval(intervalo);
             if(velocidadeFrame <= 20) velocidadeFrame = 20;
-            intervalo = setInterval(() => movimentaCobra(), velocidadeFrame);
+            intervalo = setInterval(() => {
+                movimentaCobra();
+                desenhaScore();
+                qtdPontos += 1;
+            }, velocidadeFrame);
         }
 }
 
@@ -470,6 +477,13 @@ function verificaSobreposicao(){
 
 }
 
+function desenhaScore(color = "#FFF"){
+    ctx.fillStyle = color;
+    // ctx.fillRect(canvas.width/2, canvas.height/2, 200, 100);
+    ctx.font = "20px Arial";
+    ctx.fillText("Score: " + qtdPontos, canvas.width - 330, 30);
+}
+
 function criaCenario(){
     for(let i = 0; i < 8; i++){
         ctx.beginPath();
@@ -542,4 +556,8 @@ cenarioPosicao.push([window.innerWidth, 0]); //canto superior direito
 cenarioPosicao.push([0, window.innerHeight]); //canto inferior esquerdo
 cenarioPosicao.push([window.innerWidth, window.innerHeight]); //canto inferior direito
 
-let intervalo = setInterval(() => movimentaCobra(), velocidadeFrame);
+let intervalo = setInterval(() => {
+    movimentaCobra();
+    desenhaScore();
+    qtdPontos += 1;
+}, velocidadeFrame);
