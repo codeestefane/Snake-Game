@@ -1,7 +1,7 @@
 /**
- * tratamento de colisões com o cenário <-
+ * tratamento de colisões com o cenário <- OK
  * tratamento de colisões com a própria cobra
- * sobreposição de elementos (alimento e cenário) <-
+ * sobreposição de elementos (alimento e cenário) <- OK
  * otimizar fluidez do movimento da cobra
  * sistema de pontuação
  * níveis
@@ -12,6 +12,7 @@
  * versão mobile
  */
 
+// configurações iniciais do canvas
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
 const corpoHTML = document.querySelector('body');
@@ -24,8 +25,10 @@ ctx.fillRect(0, 0, canvas.width, canvas.height);
 ctx.lineWidth = 10;
 
 let cenarioPosicao = [];
+let anguloFinal;
+let anguloInicial;
 
-let velocidadeFrame = 80;
+let velocidadeFrame = 60;
 
 let ultimoAnguloInicial = 0;
 let ultimoAnguloInicialY = Math.PI/2;
@@ -63,6 +66,7 @@ class CorpoCobrinha {
 class Caminho {
     constructor(eixo, inicio, fim, sentido){
         this.eixo = eixo;
+        // atributo de início apenas é utilizado para atravessar cenário
         this.inicio = inicio;
         this.fim = fim;
         this.sentido = sentido;
@@ -136,18 +140,16 @@ class Snake{
             
             cobra.tamanho += 4;
         }
-
     }
 }
 
 const cobra = new Snake(5, 'white', 75, 75, 5);
 
-
+// identifica tecla selecionada pelo usuário
 corpoHTML.addEventListener('keypress', (evento) => {
     if(evento.keyCode === 115 && cobra.trajetoria[cobra.trajetoria.length - 1].eixo != 'y'){
         cobra.trajetoria[cobra.trajetoria.length - 1].fim = cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX;
         cobra.trajetoria.push(new Caminho('y', null, null, 1));
-        console.log("apertou botao!");
     } else if(evento.keyCode === 100 && cobra.trajetoria[cobra.trajetoria.length - 1].eixo != 'x'){
         cobra.trajetoria[cobra.trajetoria.length - 1].fim = cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY;
         cobra.trajetoria.push(new Caminho('x', null, null, 1));
@@ -159,6 +161,34 @@ corpoHTML.addEventListener('keypress', (evento) => {
         cobra.trajetoria.push(new Caminho('y', null, null, -1));
     }
 });
+
+function desenhaEfeitoColisao(){
+    ctx.arc(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX + 2, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY + 2, cobra.raio + 4, 0, Math.PI, true);
+    ctx.strokeStyle = 'yellow';
+    ctx.lineWidth = 2;
+    ctx.stroke(); 
+    
+    ctx.beginPath();
+    ctx.moveTo(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX + 2, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY + 2);
+    ctx.lineTo(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX + 4, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY + 4);
+    ctx.lineTo(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX + 6, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY + 4);
+    ctx.lineTo(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX + 4, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY + 6);
+    ctx.lineTo(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX + 2, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY + 8);
+    ctx.lineTo(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY + 6);
+    ctx.lineTo(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX - 2, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY + 4);
+    ctx.lineTo(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY + 4);
+    ctx.lineTo(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX + 2, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY);
+    ctx.stroke(); 
+    ctx.fillStyle = "yellow";
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // ctx.fillStyle = "rgba(255, 240, 240, 0.9)";
+    // ctx.fillRect(canvas.width/2 - 200, canvas.height/2 - 100, 400, 200);
+    // ctx.moveTo(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX + 2, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY + 2);
+    // ctx.lineTo(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX - 4, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY - 4);
+}
 
 function desenhaCobraEixoY(i){
     if((i !== cobra.tamanho - 1 && cobra.trajetoria[cobra.corpoCobrinha[i + 1].trajetoriaAtual].eixo !== 'y') || cobra.corpoCobrinha[i].posicaoY < 15 || (cobra.corpoCobrinha[i].posicaoY + 10 >= window.innerHeight && cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].inicio !== null )){
@@ -290,10 +320,6 @@ function desenhaCobra () {
                     cobra.trajetoria.push(new Caminho('x', window.innerWidth, null, -1));  
                 }
             }
-
-            // if(cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].inicio != null && cobra.corpoCobrinha[i].posicaoX >= cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual - 1].fim){
-            //     cobra.corpoCobrinha[i].posicaoX = cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].inicio;
-            // }
         } else {
             cobra.atualizaPosicaoY(i);
             
@@ -329,14 +355,14 @@ function movimentaCobra(){
     ctx.fillStyle = 'black';
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    verificaColisao(alimento.posicaoX, alimento.posicaoY, true);
     desenhaAlimentoAleatorio();
-    
     ctx.strokeStyle = 'red';
     desenhaCobra();   
     criaCenario();
-    verificaColisao();
+    verificaColisao(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY, false);
+    verificaCobraAlimento();
 }
-
 
 function desenhaAlimentoAleatorio(){
     //const aleatorio = Math.round(Math.random() * (5 - 1) + 1);
@@ -349,11 +375,10 @@ function desenhaAlimentoAleatorio(){
 
 const alimento = new AlimentoAleatorio(20);
 
-function verificaColisao(){
-    //colisão com alimento
+function verificaCobraAlimento(){
     if(alimento.posicaoX - alimento.raioAtual <= cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX && 
          cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX <= alimento.posicaoX + alimento.raioAtual &&
-        alimento.posicaoY -alimento.raioAtual <= cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY &&
+        alimento.posicaoY - alimento.raioAtual <= cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY &&
         cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY <= alimento.posicaoY + alimento.raioAtual){
             alimento.atualizaAlimentoAleatorio();
             cobra.aumentaCobrinha();
@@ -363,61 +388,81 @@ function verificaColisao(){
             if(velocidadeFrame <= 20) velocidadeFrame = 20;
             intervalo = setInterval(() => movimentaCobra(), velocidadeFrame);
         }
+}
 
+function verificaColisao(posicaoX, posicaoY, sobreposicao){
         for(let i = 0; i < 2; i++){
-            if(cenarioPosicao[i][0] - 12 <= cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX &&
-                 cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX <= cenarioPosicao[i][0] + 410 &&
-                 cenarioPosicao[i][1] - 12 <= cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY &&
-                 cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY <= cenarioPosicao[i][1] + 63
+            if(cenarioPosicao[i][0] - 12 <= posicaoX &&
+                 posicaoX <= cenarioPosicao[i][0] + 410 &&
+                 cenarioPosicao[i][1] - 12 <= posicaoY &&
+                 posicaoY <= cenarioPosicao[i][1] + 63
             ){
-                console.log("colidiu!");
-                clearInterval(intervalo);
-                break;
+                if(sobreposicao) alimento.atualizaAlimentoAleatorio();
+                else {
+                    desenhaEfeitoColisao();
+                    clearInterval(intervalo);
+                    break;
+                }
             }
         }
 
-        //canto superior esquerdo
-        if((cenarioPosicao[2][0] <= cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX &&
-            cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX <= cenarioPosicao[2][0] + 210 &&
-            cenarioPosicao[2][1] <= cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY &&
-            cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY <= cenarioPosicao[2][1] + 63) ||
-            (cenarioPosicao[2][0] <= cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX &&
-                cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX <= cenarioPosicao[2][0] + 63 &&
-                cenarioPosicao[2][1] + 63 <= cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY &&
-                cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY <= cenarioPosicao[2][1] + 213)
+        if((cenarioPosicao[2][0] <= posicaoX &&
+            posicaoX <= cenarioPosicao[2][0] + 210 &&
+            cenarioPosicao[2][1] <= posicaoY &&
+            posicaoY <= cenarioPosicao[2][1] + 63) ||
+            (cenarioPosicao[2][0] <= posicaoX &&
+                posicaoX <= cenarioPosicao[2][0] + 63 &&
+                cenarioPosicao[2][1] + 63 <= posicaoY &&
+                posicaoY <= cenarioPosicao[2][1] + 213)
         ){
-            console.log("colidiu!");
-            clearInterval(intervalo);
-        }
-
-        //canto superior direito
-        if((cenarioPosicao[3][0] >= cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX &&
-            cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX >= cenarioPosicao[3][0] - 210 &&
-            cenarioPosicao[3][1] <= cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY &&
-            cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY <= cenarioPosicao[3][1] + 63) ||
-            (cenarioPosicao[3][0] >= cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX &&
-                cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX >= cenarioPosicao[3][0] - 63 &&
-                cenarioPosicao[3][1] + 63 <= cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY &&
-                cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY <= cenarioPosicao[3][1] + 213)
+            if(sobreposicao) alimento.atualizaAlimentoAleatorio();
+            else {
+                desenhaEfeitoColisao();
+                clearInterval(intervalo);
+            }
+        } else if((cenarioPosicao[4][0] <= posicaoX &&
+            posicaoX <= cenarioPosicao[4][0] + 63 &&
+            cenarioPosicao[4][1] - 213 <= posicaoY &&
+            posicaoY <= cenarioPosicao[4][1] - 63) ||
+            (cenarioPosicao[4][0] <= posicaoX &&
+                posicaoX <= cenarioPosicao[4][0] + 213 &&
+                cenarioPosicao[4][1] - 63 <= posicaoY &&
+                posicaoY <= cenarioPosicao[4][1])
         ){
-            console.log("colidiu!");
-            clearInterval(intervalo);
+            if(sobreposicao) alimento.atualizaAlimentoAleatorio();
+            else {
+                desenhaEfeitoColisao();
+                clearInterval(intervalo);
+            }
+        } else if((cenarioPosicao[3][0] >= posicaoX &&
+            posicaoX >= cenarioPosicao[3][0] - 210 &&
+            cenarioPosicao[3][1] <= posicaoY &&
+            posicaoY <= cenarioPosicao[3][1] + 63) ||
+            (cenarioPosicao[3][0] >= posicaoX &&
+                posicaoX >= cenarioPosicao[3][0] - 63 &&
+                cenarioPosicao[3][1] + 63 <= posicaoY &&
+                posicaoY <= cenarioPosicao[3][1] + 213)
+        ){
+            if(sobreposicao) alimento.atualizaAlimentoAleatorio();
+            else {
+                desenhaEfeitoColisao();
+                clearInterval(intervalo);
+            }
+        } else if((cenarioPosicao[5][0] - 63 <= posicaoX &&
+            posicaoX <= cenarioPosicao[5][0] &&
+            cenarioPosicao[5][1] - 213 <= posicaoY &&
+            posicaoY <= cenarioPosicao[5][1] - 63) ||
+            (cenarioPosicao[5][0] - 213 <= posicaoX &&
+                posicaoX <= cenarioPosicao[5][0] &&
+                cenarioPosicao[5][1] - 63 <= posicaoY &&
+                posicaoY <= cenarioPosicao[5][1])
+        ){
+            if(sobreposicao) alimento.atualizaAlimentoAleatorio();
+            else {
+                desenhaEfeitoColisao();
+                clearInterval(intervalo);
+            }
         }
-
-        //canto inferior esquerdo
-        // if((cenarioPosicao[3][0] <= cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX &&
-        //     cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX <= cenarioPosicao[3][0] + 210 &&
-        //     cenarioPosicao[3][1] >= cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY &&
-        //     cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY >= cenarioPosicao[3][1] - 63) ||
-        //     (cenarioPosicao[3][0] <= cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX &&
-        //         cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX <= cenarioPosicao[3][0] + 63 &&
-        //         cenarioPosicao[3][1] - 63 >= cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY &&
-        //         cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY >= cenarioPosicao[3][1] - 213)
-        // ){
-        //     console.log("colidiu!");
-        //     clearInterval(intervalo);
-        // }
-
 
 }
 
@@ -428,14 +473,15 @@ function verificaSobreposicao(){
 function criaCenario(){
     for(let i = 0; i < 8; i++){
         ctx.beginPath();
-        ctx.rect(window.innerWidth/2 - 250 + 50 * i , window.innerHeight/2 - 100, 50, 50);
-        ctx.rect(window.innerWidth/2 - 250 + 50 * i , window.innerHeight/2 + 50, 50, 50);
-        //cenarioPosicao.push([window.innerWidth/2 - 250 + 50 * i ,  window.innerHeight/2 + 50]);
+        //
+        ctx.rect(window.innerWidth/2 - 200 + 50 * i , window.innerHeight/2 - 100, 50, 50);
+        ctx.rect(window.innerWidth/2 - 200 + 50 * i , window.innerHeight/2 + 50, 50, 50);
         if(i % 2 === 0) ctx.fillStyle = "red";
         else ctx.fillStyle = "white";
         ctx.fill();
     }
 
+    // cenário do canto superior esquerdo
     ctx.beginPath();
     ctx.fillStyle = "red";
     ctx.fillRect(0, 0, 50, 50);
@@ -447,6 +493,7 @@ function criaCenario(){
     ctx.fillRect(0, 150, 50, 50);
     ctx.fillRect(150, 0, 50, 50);
 
+    // cenário do canto inferior esquerdo
     ctx.beginPath();
     ctx.fillRect(0, window.innerHeight - 50, 50, 50);
     ctx.fillRect(0, window.innerHeight - 150, 50, 50);
@@ -457,6 +504,7 @@ function criaCenario(){
     ctx.fillRect(0, window.innerHeight - 200, 50, 50);
     ctx.fillRect(150, window.innerHeight - 50, 50, 50);
 
+    // cenário do canto superior direito
     ctx.beginPath();
     ctx.fillRect(window.innerWidth - 100, 0, 50, 50);
     ctx.fillRect(window.innerWidth - 200, 0, 50, 50);
@@ -467,6 +515,7 @@ function criaCenario(){
     ctx.fillRect(window.innerWidth - 150, 0, 50, 50);
     ctx.fillRect(window.innerWidth - 50, 100, 50, 50);
 
+    // cenário do canto inferior direito
     ctx.beginPath();
     ctx.fillRect(window.innerWidth - 100, window.innerHeight - 50, 50, 50);
     ctx.fillRect(window.innerWidth - 50, window.innerHeight - 100, 50, 50);
@@ -486,8 +535,8 @@ function exibePontuacao(){
     
 }
 
-cenarioPosicao.push([window.innerWidth/2 - 250,  window.innerHeight/2 - 100]);
-cenarioPosicao.push([window.innerWidth/2 - 250,  window.innerHeight/2 + 50]);
+cenarioPosicao.push([window.innerWidth/2 - 200,  window.innerHeight/2 - 100]); // cenário do meio superior
+cenarioPosicao.push([window.innerWidth/2 - 200,  window.innerHeight/2 + 50]); // cenário do meio inferior
 cenarioPosicao.push([0, 0]); //canto superior esquerdo
 cenarioPosicao.push([window.innerWidth, 0]); //canto superior direito
 cenarioPosicao.push([0, window.innerHeight]); //canto inferior esquerdo
