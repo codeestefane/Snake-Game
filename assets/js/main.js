@@ -3,6 +3,7 @@
  * tratamento de colisões com a própria cobra <- OK
  * sobreposição de elementos (alimento e cenário) <- OK
  * otimizar fluidez do movimento da cobra
+ * melhorar qualidade de código
  * sistema de pontuação <- OK (pode melhorar)
  * níveis
  * exibir pontuação <- OK
@@ -25,15 +26,14 @@ ctx.fillRect(0, 0, canvas.width, canvas.height);
 ctx.lineWidth = 10;
 
 let cenarioPosicao = [];
+
 let anguloFinal;
 let anguloInicial;
-
-let qtdPontos = 0;
+let ultimoAnguloInicial = 0;
+let ultimoAnguloInicialY = Math.PI/2;
 
 let velocidadeFrame = 60;
 
-let ultimoAnguloInicial = 0;
-let ultimoAnguloInicialY = Math.PI/2;
 
 class AlimentoAleatorio {
     constructor(raio){
@@ -86,19 +86,20 @@ class Snake{
         this.raio = raio;
         this.corpoCobrinha = [];
         this.trajetoria = [];
+        this.score = 0;
 
         this.trajetoria.push(new Caminho('x', null, null, 1));
 
         this.criaCorpoCobrinha();
     }
 
-    mover(){
-        ctx.fillStyle = 'black';
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // mover(){
+    //     ctx.fillStyle = 'black';
+    //     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    //     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-        moveCobra(); 
-    }
+    //     moveCobra(); 
+    // }
 
     setPosicaoX(novaPosicaoX){
         this.posicaoX.push(novaPosicaoX);
@@ -218,7 +219,8 @@ function desenhaCobraEixoY(i){
     }
 
     ctx.beginPath();
-    ctx.arc(cobra.corpoCobrinha[i].posicaoX, cobra.corpoCobrinha[i].posicaoY, cobra.raio, anguloInicial, anguloFinal, true);
+    if(anguloInicial === Math.PI * 2) ctx.arc(cobra.corpoCobrinha[i].posicaoX, cobra.corpoCobrinha[i].posicaoY, 5, anguloInicial, anguloFinal, true);
+    else ctx.arc(cobra.corpoCobrinha[i].posicaoX, cobra.corpoCobrinha[i].posicaoY, cobra.raio, anguloInicial, anguloFinal, true);
     ctx.stroke();
 
     if(i === 0){
@@ -324,8 +326,8 @@ function desenhaCobra () {
             }
         } else {
             cobra.atualizaPosicaoY(i);
-            
             desenhaCobraEixoY(i);
+
             if(cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].fim != null && cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].sentido !== -1 && 
                 cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].fim < cobra.corpoCobrinha[i].posicaoY){
                     cobra.corpoCobrinha[i].trajetoriaAtual += 1;
@@ -357,12 +359,15 @@ function movimentaCobra(){
     ctx.fillStyle = 'black';
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    verificaColisao(alimento.posicaoX, alimento.posicaoY, true);
+
+    verificaColisaoCenario(alimento.posicaoX, alimento.posicaoY, true);
     desenhaAlimentoAleatorio();
     ctx.strokeStyle = 'red';
+
     desenhaCobra();   
     criaCenario();
-    verificaColisao(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY, false);
+
+    verificaColisaoCenario(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY, false);
     verificaCobraAlimento();
     verificaColisaoCobra();
 }
@@ -386,19 +391,18 @@ function verificaCobraAlimento(){
             alimento.atualizaAlimentoAleatorio();
             cobra.aumentaCobrinha();
             velocidadeFrame -= 4;
-            qtdPontos += 20;
-            desenhaScore("green");
+            cobra.score += 20;
             clearInterval(intervalo);
+
             if(velocidadeFrame <= 20) velocidadeFrame = 20;
             intervalo = setInterval(() => {
                 movimentaCobra();
                 desenhaScore();
-                qtdPontos += 1;
             }, velocidadeFrame);
         }
 }
 
-function verificaColisao(posicaoX, posicaoY, sobreposicao){
+function verificaColisaoCenario(posicaoX, posicaoY, sobreposicao){
         for(let i = 0; i < 2; i++){
             if(cenarioPosicao[i][0] - 12 <= posicaoX &&
                  posicaoX <= cenarioPosicao[i][0] + 410 &&
@@ -484,15 +488,10 @@ function verificaColisaoCobra(){
     }
 }
 
-function verificaSobreposicao(){
-
-}
-
 function desenhaScore(color = "#FFF"){
     ctx.fillStyle = color;
-    // ctx.fillRect(canvas.width/2, canvas.height/2, 200, 100);
     ctx.font = "20px Arial";
-    ctx.fillText("Score: " + qtdPontos, canvas.width - 330, 30);
+    ctx.fillText("Score: " + cobra.score, canvas.width - 330, 30);
 }
 
 function criaCenario(){
@@ -570,5 +569,4 @@ cenarioPosicao.push([window.innerWidth, window.innerHeight]); //canto inferior d
 let intervalo = setInterval(() => {
     movimentaCobra();
     desenhaScore();
-    qtdPontos += 1;
 }, velocidadeFrame);
