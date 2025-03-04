@@ -1,11 +1,11 @@
 /**
  * tratamento de colisões com o cenário <- OK
- * tratamento de colisões com a própria cobra
+ * tratamento de colisões com a própria cobra <- OK
  * sobreposição de elementos (alimento e cenário) <- OK
  * otimizar fluidez do movimento da cobra
- * sistema de pontuação
+ * sistema de pontuação <- OK (pode melhorar)
  * níveis
- * exibir pontuação
+ * exibir pontuação <- OK
  * efeitos especiais
  * ranking
  * tela inicial do jogo
@@ -364,6 +364,7 @@ function movimentaCobra(){
     criaCenario();
     verificaColisao(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY, false);
     verificaCobraAlimento();
+    verificaColisaoCobra();
 }
 
 function desenhaAlimentoAleatorio(){
@@ -471,6 +472,16 @@ function verificaColisao(posicaoX, posicaoY, sobreposicao){
             }
         }
 
+}
+
+function verificaColisaoCobra(){
+    for(let i = 0; i < cobra.tamanho - 1; i++){
+        if(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX === cobra.corpoCobrinha[i].posicaoX && 
+            cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY === cobra.corpoCobrinha[i].posicaoY){
+                desenhaEfeitoColisao();
+                clearInterval(intervalo); 
+            }
+    }
 }
 
 function verificaSobreposicao(){
