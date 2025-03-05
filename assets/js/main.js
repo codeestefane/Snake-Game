@@ -27,11 +27,6 @@ ctx.lineWidth = 10;
 
 let cenarioPosicao = [];
 
-let anguloFinal;
-let anguloInicial;
-let ultimoAnguloInicial = 0;
-let ultimoAnguloInicialY = Math.PI/2;
-
 let velocidadeFrame = 60;
 
 
@@ -58,9 +53,11 @@ class AlimentoAleatorio {
 }
 
 class CorpoCobrinha {
-    constructor(posicaoX, posicaoY, trajetoriaAtual){
+    constructor(posicaoX, posicaoY, anguloInicial, anguloFinal, trajetoriaAtual){
         this.posicaoX = posicaoX;
         this.posicaoY = posicaoY;
+        this.anguloInicial = anguloInicial;
+        this.anguloFinal = anguloFinal;
         this.trajetoriaAtual = trajetoriaAtual;
     }
 }
@@ -87,19 +84,9 @@ class Snake{
         this.corpoCobrinha = [];
         this.trajetoria = [];
         this.score = 0;
-
         this.trajetoria.push(new Caminho('x', null, null, 1));
-
         this.criaCorpoCobrinha();
     }
-
-    // mover(){
-    //     ctx.fillStyle = 'black';
-    //     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    //     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    //     moveCobra(); 
-    // }
 
     setPosicaoX(novaPosicaoX){
         this.posicaoX.push(novaPosicaoX);
@@ -123,22 +110,45 @@ class Snake{
 
     }
 
+    atualizaAnguloEixoX(indice){
+        if (this.corpoCobrinha[indice].anguloInicial === 0) {
+            this.corpoCobrinha[indice].anguloInicial =  Math.PI;
+            this.corpoCobrinha[indice].anguloFinal =  0;
+        } else {
+            this.corpoCobrinha[indice].anguloInicial =  0;
+            this.corpoCobrinha[indice].anguloFinal =  Math.PI;
+        }
+    }
+
+    atualizaAnguloEixoY(indice){
+        if (this.corpoCobrinha[indice].anguloInicial === 3 * Math.PI/2) {
+            this.corpoCobrinha[indice].anguloInicial =  Math.PI/2;
+            this.corpoCobrinha[indice].anguloFinal =  3 * Math.PI/2;
+        } else {
+            this.corpoCobrinha[indice].anguloInicial =  3 * Math.PI/2;
+            this.corpoCobrinha[indice].anguloFinal =  Math.PI/2;
+        }
+    }
+
     criaCorpoCobrinha(){
         for(let i = 0; i < this.tamanho; i++){
-            this.corpoCobrinha.push(new CorpoCobrinha(this.posicaoX + 10 * i, this.posicaoY, 0));
+            if(i % 2 === 0) this.corpoCobrinha.push(new CorpoCobrinha(this.posicaoX + 10 * i, this.posicaoY, 0, Math.PI, 0));
+            else this.corpoCobrinha.push(new CorpoCobrinha(this.posicaoX + 10 * i, this.posicaoY, Math.PI, 0, 0));
         }
     }
 
     aumentaCobrinha(){
         if(this.trajetoria[this.corpoCobrinha[0].trajetoriaAtual].eixo === 'x'){
             for(let i = 0; i < 4; i++){
-                this.corpoCobrinha.unshift(new CorpoCobrinha(this.corpoCobrinha[0].posicaoX - 10 * this.trajetoria[this.corpoCobrinha[0].trajetoriaAtual].sentido, this.corpoCobrinha[0].posicaoY, this.corpoCobrinha[0].trajetoriaAtual));
+                if(this.corpoCobrinha[0].anguloInicial === 0) this.corpoCobrinha.unshift(new CorpoCobrinha(this.corpoCobrinha[0].posicaoX - 10 * this.trajetoria[this.corpoCobrinha[0].trajetoriaAtual].sentido, this.corpoCobrinha[0].posicaoY, Math.PI, 0, this.corpoCobrinha[0].trajetoriaAtual));
+                else this.corpoCobrinha.unshift(new CorpoCobrinha(this.corpoCobrinha[0].posicaoX - 10 * this.trajetoria[this.corpoCobrinha[0].trajetoriaAtual].sentido, this.corpoCobrinha[0].posicaoY, 0, Math.PI, this.corpoCobrinha[0].trajetoriaAtual));
             }
 
             cobra.tamanho += 4;
         } else {
             for(let i = 0; i < 4; i++){
-                this.corpoCobrinha.unshift(new CorpoCobrinha(this.corpoCobrinha[0].posicaoX, this.corpoCobrinha[0].posicaoY  - 10 * this.trajetoria[this.corpoCobrinha[0].trajetoriaAtual].sentido, this.corpoCobrinha[0].trajetoriaAtual));
+                if(this.corpoCobrinha[0].anguloInicial === 3 * Math.PI/2) this.corpoCobrinha.unshift(new CorpoCobrinha(this.corpoCobrinha[0].posicaoX, this.corpoCobrinha[0].posicaoY  - 10 * this.trajetoria[this.corpoCobrinha[0].trajetoriaAtual].sentido, Math.PI/2, 3 * Math.PI/2, this.corpoCobrinha[0].trajetoriaAtual));
+                else this.corpoCobrinha.unshift(new CorpoCobrinha(this.corpoCobrinha[0].posicaoX, this.corpoCobrinha[0].posicaoY  - 10 * this.trajetoria[this.corpoCobrinha[0].trajetoriaAtual].sentido, 3 * Math.PI/2, Math.PI/2, this.corpoCobrinha[0].trajetoriaAtual));
             }
             
             cobra.tamanho += 4;
@@ -166,141 +176,72 @@ corpoHTML.addEventListener('keypress', (evento) => {
 });
 
 function desenhaEfeitoColisao(){
-    ctx.arc(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX + 2, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY + 2, cobra.raio + 4, 0, Math.PI, true);
-    ctx.strokeStyle = 'yellow';
-    ctx.lineWidth = 2;
-    ctx.stroke(); 
-    
-    ctx.beginPath();
-    ctx.moveTo(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX + 2, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY + 2);
-    ctx.lineTo(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX + 4, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY + 4);
-    ctx.lineTo(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX + 6, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY + 4);
-    ctx.lineTo(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX + 4, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY + 6);
-    ctx.lineTo(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX + 2, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY + 8);
-    ctx.lineTo(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY + 6);
-    ctx.lineTo(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX - 2, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY + 4);
-    ctx.lineTo(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY + 4);
-    ctx.lineTo(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX + 2, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY);
-    ctx.stroke(); 
-    ctx.fillStyle = "yellow";
-    ctx.fill();
-
     ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    // ctx.fillStyle = "rgba(255, 240, 240, 0.9)";
-    // ctx.fillRect(canvas.width/2 - 200, canvas.height/2 - 100, 400, 200);
-    // ctx.moveTo(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX + 2, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY + 2);
-    // ctx.lineTo(cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX - 4, cobra.corpoCobrinha[cobra.tamanho - 1].posicaoY - 4);
 }
 
-function desenhaCobraEixoY(i){
-    if((i !== cobra.tamanho - 1 && cobra.trajetoria[cobra.corpoCobrinha[i + 1].trajetoriaAtual].eixo !== 'y') || cobra.corpoCobrinha[i].posicaoY < 15 || (cobra.corpoCobrinha[i].posicaoY + 10 >= window.innerHeight && cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].inicio !== null )){
-        anguloFinal = 0;
-        anguloInicial = Math.PI * 2;
-    } else if(ultimoAnguloInicialY === Math.PI/2){
-            anguloInicial = 3 * Math.PI/2;
-            anguloFinal = Math.PI/2;
-    } else {
-        anguloInicial = Math.PI/2;
-        anguloFinal = 3 * Math.PI/2;
-    }
-    
+function desenhaCorpoCobra(i, eixo){
+    // desenha seguimentos da cobrinha
     ctx.beginPath();
-    if(i === cobra.tamanho - 1){
-        if(cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].sentido === -1){
-            ctx.arc(cobra.corpoCobrinha[i].posicaoX, cobra.corpoCobrinha[i].posicaoY - (cobra.raio + 2), cobra.raio + 2, 0, Math.PI * 2, true);
-        } else {
-            ctx.arc(cobra.corpoCobrinha[i].posicaoX, cobra.corpoCobrinha[i].posicaoY + (cobra.raio + 2), 7, 0, Math.PI * 2, true);
-        }
-
-        ctx.stroke(); 
-        ctx.fillStyle = 'red';
-        ctx.fill();
-    }
-
-    ctx.beginPath();
-    if(anguloInicial === Math.PI * 2) ctx.arc(cobra.corpoCobrinha[i].posicaoX, cobra.corpoCobrinha[i].posicaoY, 5, anguloInicial, anguloFinal, true);
-    else ctx.arc(cobra.corpoCobrinha[i].posicaoX, cobra.corpoCobrinha[i].posicaoY, cobra.raio, anguloInicial, anguloFinal, true);
+    ctx.arc(cobra.corpoCobrinha[i].posicaoX, cobra.corpoCobrinha[i].posicaoY, cobra.raio, cobra.corpoCobrinha[i].anguloInicial, cobra.corpoCobrinha[i].anguloFinal, true);
     ctx.stroke();
 
-    if(i === 0){
-        ctx.beginPath();
-        if(cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].sentido === -1){
-            ctx.arc(cobra.corpoCobrinha[i].posicaoX, cobra.corpoCobrinha[i].posicaoY + 4, 1, 0, Math.PI * 2, true);
-        } else {
-            ctx.arc(cobra.corpoCobrinha[i].posicaoX, cobra.corpoCobrinha[i].posicaoY - 4, 1, 0, Math.PI * 2, true);
-        }
-        ctx.stroke();   
-    }
-    
-    if(anguloInicial == Math.PI/2){
-        anguloInicial = 3*Math.PI/2;
-        anguloFinal = Math.PI/2;
-    } else {
-        anguloInicial = Math.PI/2;
-        anguloFinal = 3*Math.PI/2;
-    }
+    ctx.beginPath();
 
-    ultimoAnguloInicialY = anguloFinal;
-}
-
-function desenhaCobraEixoX(i, anguloInicial = Math.PI, anguloFinal = 0){
-    if((i != cobra.tamanho - 1 && cobra.trajetoria[cobra.corpoCobrinha[i + 1].trajetoriaAtual].eixo != 'x') || cobra.corpoCobrinha[i].posicaoX < 15 || (cobra.corpoCobrinha[i].posicaoX + 10 >= window.innerWidth && cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].inicio !== null )){
-        anguloInicial = 0;
-        anguloFinal = Math.PI * 2;
-    } else if(ultimoAnguloInicial == Math.PI){
-        anguloInicial = 0;
-        anguloFinal = Math.PI;
-    } else {
-        anguloInicial = Math.PI;
-        anguloFinal = 0;
-    }
-    
-    if(i === cobra.tamanho - 1){
-        ctx.beginPath();
-        if(cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].sentido === -1){
-            ctx.arc(cobra.corpoCobrinha[i].posicaoX - (cobra.raio + 2), cobra.corpoCobrinha[i].posicaoY, cobra.raio + 2, 0, Math.PI * 2, true);
+    // desenha círculo quando a cobrinha faz curvas (obs: precisa melhorar isso)
+    if((i !== cobra.tamanho - 1 && cobra.trajetoria[cobra.corpoCobrinha[i + 1].trajetoriaAtual].eixo !== eixo) ||
+        cobra.corpoCobrinha[i].posicaoY < 15 || (cobra.corpoCobrinha[i].posicaoY + 10 >= window.innerHeight && cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].inicio !== null ) ||
+        cobra.corpoCobrinha[i].posicaoX < 15 || (cobra.corpoCobrinha[i].posicaoX + 10 >= window.innerWidth && cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].inicio !== null )){
+            ctx.arc(cobra.corpoCobrinha[i].posicaoX, cobra.corpoCobrinha[i].posicaoY, cobra.raio, 0, Math.PI * 2, true);
+            ctx.stroke(); 
+    } else if(i === cobra.tamanho - 1){
+        if(eixo === 'y'){
+            if(cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].sentido === -1){
+                ctx.arc(cobra.corpoCobrinha[i].posicaoX, cobra.corpoCobrinha[i].posicaoY - (cobra.raio + 2), cobra.raio + 2, 0, Math.PI * 2, true);
+            } else {
+                ctx.arc(cobra.corpoCobrinha[i].posicaoX, cobra.corpoCobrinha[i].posicaoY + (cobra.raio + 2), 7, 0, Math.PI * 2, true);
+            }
         } else {
-            ctx.arc(cobra.corpoCobrinha[i].posicaoX + (cobra.raio + 2), cobra.corpoCobrinha[i].posicaoY, cobra.raio + 2, 0, Math.PI * 2, true);
+            if(cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].sentido === -1){
+                ctx.arc(cobra.corpoCobrinha[i].posicaoX - (cobra.raio + 2), cobra.corpoCobrinha[i].posicaoY, cobra.raio + 2, 0, Math.PI * 2, true);
+            } else {
+                ctx.arc(cobra.corpoCobrinha[i].posicaoX + (cobra.raio + 2), cobra.corpoCobrinha[i].posicaoY, cobra.raio + 2, 0, Math.PI * 2, true);
+            }
         }
 
         ctx.stroke();
+
         ctx.fillStyle = 'red';
-        ctx.fill();  
-    }
-
-    ctx.beginPath();
-    ctx.arc(cobra.corpoCobrinha[i].posicaoX, cobra.corpoCobrinha[i].posicaoY, cobra.raio, anguloInicial, anguloFinal, true);
-    ctx.stroke();
-
-    if(i === 0){
+        ctx.fill();
+    } else if(i === 0){
         ctx.beginPath();
-        if(cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].sentido === -1){
-            ctx.arc(cobra.corpoCobrinha[i].posicaoX + 4, cobra.corpoCobrinha[i].posicaoY, 1, 0, Math.PI * 2, true);
+        if(eixo === 'x'){
+            if(cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].sentido === -1){
+                ctx.arc(cobra.corpoCobrinha[i].posicaoX + 4, cobra.corpoCobrinha[i].posicaoY, 1, 0, Math.PI * 2, true);
+            } else {
+                ctx.arc(cobra.corpoCobrinha[i].posicaoX - 4, cobra.corpoCobrinha[i].posicaoY, 1, 0, Math.PI * 2, true);
+            }
         } else {
-            ctx.arc(cobra.corpoCobrinha[i].posicaoX - 4, cobra.corpoCobrinha[i].posicaoY, 1, 0, Math.PI * 2, true);
+            if(cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].sentido === -1){
+                ctx.arc(cobra.corpoCobrinha[i].posicaoX, cobra.corpoCobrinha[i].posicaoY + 4, 1, 0, Math.PI * 2, true);
+            } else {
+                ctx.arc(cobra.corpoCobrinha[i].posicaoX, cobra.corpoCobrinha[i].posicaoY - 4, 1, 0, Math.PI * 2, true);
+            }
         }
-        
+    
         ctx.stroke();   
     }
-    
-    if(anguloInicial == Math.PI){
-        anguloInicial = 0;
-        anguloFinal = Math.PI;
-    } else {
-        anguloInicial = Math.PI;
-        anguloFinal = 0;
-    }
-
-    ultimoAnguloInicial = anguloFinal;
 }
+
 
 function desenhaCobra () {
     for(let i = 0; i < cobra.tamanho; i++){
         ctx.lineWidth = 10;
         if(cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].eixo == 'x'){
             cobra.atualizaPosicaoX(i);
-            desenhaCobraEixoX(i);
+            cobra.atualizaAnguloEixoX(i);
+            desenhaCorpoCobra(i, 'x');
+
             if(cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].fim != null && cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].sentido !== -1 &&
                 cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].fim < cobra.corpoCobrinha[i].posicaoX - 10){
                     cobra.corpoCobrinha[i].trajetoriaAtual += 1;
@@ -326,7 +267,8 @@ function desenhaCobra () {
             }
         } else {
             cobra.atualizaPosicaoY(i);
-            desenhaCobraEixoY(i);
+            cobra.atualizaAnguloEixoY(i);
+            desenhaCorpoCobra(i, 'y');
 
             if(cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].fim != null && cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].sentido !== -1 && 
                 cobra.trajetoria[cobra.corpoCobrinha[i].trajetoriaAtual].fim < cobra.corpoCobrinha[i].posicaoY){
