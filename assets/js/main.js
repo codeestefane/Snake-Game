@@ -18,9 +18,12 @@ const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
 const corpoHTML = document.querySelector('body');
 
+let corBackground = "black";
+let corCenario = ["red", "white"];
+
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-ctx.fillStyle = 'black';
+ctx.fillStyle = corBackground;
 ctx.strokeStyle = 'red';
 ctx.fillRect(0, 0, canvas.width, canvas.height);
 ctx.lineWidth = 10;
@@ -31,12 +34,13 @@ let velocidadeFrame = 60;
 
 
 class AlimentoAleatorio {
-    constructor(raio){
+    constructor(raio, cor){
         this.posicaoX = Math.round(Math.random() * (Number(window.innerWidth) - raio) + raio);
         this.posicaoY = Math.round(Math.random() * (Number(window.innerHeight) - raio) + raio);
         this.raioOriginal = raio;
         this.raioAtual = raio;
         this.crescimento = -1;
+        this.cor = cor;
     }
 
     atualizaRaio(){
@@ -44,6 +48,10 @@ class AlimentoAleatorio {
 
         if(this.raioAtual <= this.raioOriginal/2) this.crescimento = 1;
         else if(this.raioAtual === this.raioOriginal) this.crescimento = -1;
+    }
+
+    setCor(cor){
+        this.cor = cor;
     }
 
     atualizaAlimentoAleatorio(){
@@ -299,7 +307,7 @@ function desenhaCobra () {
 }
 
 function movimentaCobra(){
-    ctx.fillStyle = 'black';
+    ctx.fillStyle = corBackground;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -317,16 +325,19 @@ function movimentaCobra(){
     verificaColisaoCobra();
 }
 
-function desenhaAlimentoAleatorio(cor = "blue"){
+function desenhaAlimentoAleatorio(){
     //const aleatorio = Math.round(Math.random() * (5 - 1) + 1);
-    ctx.fillStyle = cor;
+    ctx.fillStyle = alimento.cor;
     ctx.beginPath();
     ctx.arc(alimento.posicaoX, alimento.posicaoY, alimento.raioAtual, 0, Math.PI * 2);
     ctx.fill();
     alimento.atualizaRaio();
 }
 
-const alimento = new AlimentoAleatorio(20);
+const alimento = new AlimentoAleatorio(20, "blue");
+
+let contador = 0;
+let corNiveis;
 
 function verificaCobraAlimento(){
     if(alimento.posicaoX - alimento.raioAtual <= cobra.corpoCobrinha[cobra.tamanho - 1].posicaoX && 
@@ -338,6 +349,23 @@ function verificaCobraAlimento(){
             velocidadeFrame -= 4;
             cobra.score += 20;
             clearInterval(intervalo);
+
+            corNiveis = [["green", "white", "white", "white", "yellow"], 
+                            ["black", "blue", "blue", "white", "yellow"],
+                            ["black", "green", "green", "green", "green"],
+                            ["black", "red", "red", "white", "blue"],]
+
+            console.log(cobra.score % 60 === 0);
+            if(cobra.score % 60 === 0) {
+                corBackground = corNiveis[contador][0];
+                cobra.setCor(corNiveis[contador][1]);
+                corCenario[0] = corNiveis[contador][2];
+                corCenario[1] = corNiveis[contador][3];
+                alimento.setCor(corNiveis[contador][4]);
+                contador++;
+
+                if(contador === 4) contador = 0;
+            }
 
             if(velocidadeFrame <= 20) velocidadeFrame = 20;
             intervalo = setInterval(() => {
@@ -452,8 +480,8 @@ function criaCenario(){
         ctx.beginPath();
         ctx.rect(window.innerWidth/2 - 200 + 50 * i , window.innerHeight/2 - 100, 50, 50);
         ctx.rect(window.innerWidth/2 - 200 + 50 * i , window.innerHeight/2 + 50, 50, 50);
-        if(i % 2 === 0) ctx.fillStyle = "red";
-        else ctx.fillStyle = "white";
+        if(i % 2 === 0) ctx.fillStyle = corCenario[0];
+        else ctx.fillStyle = corCenario[1];
         ctx.fill();
     }
 
@@ -471,8 +499,8 @@ function criaCenario(){
             ctx.rect(window.innerWidth - (100 + 50 * i), window.innerHeight - 50, 50, 50);
         }
 
-        if(i % 2 === 0) ctx.fillStyle = "red";
-        else ctx.fillStyle = "white";
+        if(i % 2 === 0) ctx.fillStyle = corCenario[0];
+        else ctx.fillStyle = corCenario[1];
         ctx.fill();
     }
 }
